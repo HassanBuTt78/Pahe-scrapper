@@ -10,15 +10,15 @@ const movies = []
 let links = []
 let count = 0
 
-mongoose.connect('mongodb+srv://Hassan:hassan@cluster0.wmrmexl.mongodb.net/', { useNewUrlParser: true, useUnifiedTopology: true }).then(() => { console.log("db connected successfully"); read() }).catch(e => console.log(e))
-const movieSchema = new mongoose.Schema({
-    title: String,
-    teaser: String,
-    genre: Array,
-    links: Object,
-    devL: String
-}, { versionKey: false })
-const Movie = new mongoose.model('Movie', movieSchema)
+// mongoose.connect('mongodb+srv://Hassan:hassan@cluster0.wmrmexl.mongodb.net/', { useNewUrlParser: true, useUnifiedTopology: true }).then(() => { console.log("db connected successfully"); read() }).catch(e => console.log(e))
+// const movieSchema = new mongoose.Schema({
+//     title: String,
+//     teaser: String,
+//     genre: Array,
+//     links: Object,
+//     devL: String
+// }, { versionKey: false })
+// const Movie = new mongoose.model('Movie', movieSchema)
 
 const read = () => {
 
@@ -212,3 +212,5 @@ const disableCSS = async (page) => {
         }
     });
 }
+
+read()
