@@ -147,13 +147,13 @@ const start = async () => {
             let finalLinks = pack(temp)
 
 
-            let finalData = {
+            let finalData = new Movie({
                 title: data.title,
                 teaser: data.teaser,
                 genre: data.genre,
                 links: finalLinks,
                 devL: link
-            }
+            })
             let result = await finalData.save()
             increaseCount()
             console.log(finalData)
@@ -212,3 +212,4 @@ const disableCSS = async (page) => {
         }
     });
 }
+
