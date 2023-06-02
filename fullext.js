@@ -51,7 +51,7 @@ const read2 = () => {
 
 const start = async () => {
 
-    let browser = await puppeteer.launch({ headless: true, executablePath: executablePath() })
+    let browser = await puppeteer.launch({ headless: false, executablePath: executablePath() })
 
     // ----------------------------------------------------------------------------------------------------------
     const getMega = async (url) => {
@@ -60,6 +60,7 @@ const start = async () => {
 
             console.log("url found", url)
             let page2 = await browser.newPage()
+            await disableCSS(page2)
 
             await page2.goto(url)
             console.log("5%")
@@ -86,12 +87,10 @@ const start = async () => {
             page2.waitForTimeout(4000)
             await page2.close()
             console.log('page2 closed')
-            // await newpage.setDefaultNavigationTimeout(0);
             console.log("80%", newpage.url())
 
             await newpage.waitForTimeout(3000)
             console.log("85%", newpage.url())
-            // newpage.screenshot({path: 'screenshot.png',fullPage: true})
 
             await newpage.waitForSelector('.btn.btn-primary.btn-xs', { visible: true })
 
@@ -104,6 +103,8 @@ const start = async () => {
 
             let megaLinkf = await page3.evaluate(() => document.location.href)
             console.log("100%")
+
+            await page3.close()
 
             return megaLinkf
         }
@@ -118,6 +119,7 @@ const start = async () => {
 
 
     let page = await browser.newPage()
+    await disableCSS(page)
 
     for (let link of links) {
         try {
@@ -137,24 +139,24 @@ const start = async () => {
 
             let temp = []
             for (let link of data.link) {
-               await new Promise((res, rej) => {
+                await new Promise((res, rej) => {
                     res(getMega(link))
-                }).then((link)=>{temp.push(link)})
+                }).then((link) => { temp.push(link) })
             }
 
             let finalLinks = pack(temp)
 
 
-            let finalData = new Movie({
+            let finalData = {
                 title: data.title,
                 teaser: data.teaser,
                 genre: data.genre,
                 links: finalLinks,
                 devL: link
-            })
+            }
             let result = await finalData.save()
             increaseCount()
-            console.log(result)
+            console.log(finalData)
         }
         catch (e) {
             console.log(e)
@@ -196,4 +198,17 @@ const pack = (array) => {
         i++
     }
     return give
+}
+
+const disableCSS = async (page) => {
+    await page.setRequestInterception(true);
+
+    page.on('request', (req) => {
+        if (req.resourceType() == 'stylesheet' || req.resourceType() == 'font' || req.resourceType() == 'image') {
+            req.abort();
+        }
+        else {
+            req.continue();
+        }
+    });
 }
