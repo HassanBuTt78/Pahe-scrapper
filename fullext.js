@@ -4,7 +4,6 @@ const fs = require('fs')
 const StealthPlugin = require('puppeteer-extra-plugin-stealth')
 puppeteer.use(StealthPlugin())
 const { executablePath } = require('puppeteer')
-const { resolve } = require('path')
 
 const movies = []
 let links = []
@@ -51,7 +50,7 @@ const read2 = () => {
 
 const start = async () => {
 
-    let browser = await puppeteer.launch({ headless: false, executablePath: executablePath() })
+    let browser = await puppeteer.launch({ headless: true, executablePath: executablePath() })
 
     // ----------------------------------------------------------------------------------------------------------
     const getMega = async (url) => {
@@ -61,50 +60,81 @@ const start = async () => {
             console.log("url found", url)
             let page2 = await browser.newPage()
             await disableCSS(page2)
+            await page2.evaluateOnNewDocument(() => {
+                // Modify the behavior of setTimeout and setInterval to make them run faster
+                const originalSetTimeout = window.setTimeout;
+                const originalSetInterval = window.setInterval;
+
+                window.setTimeout = (fn, delay, ...args) => {
+                    return originalSetTimeout(fn, delay / 20, ...args); // Speed up setTimeout by dividing the delay by 10
+                };
+
+                window.setInterval = (fn, interval, ...args) => {
+                    return originalSetInterval(fn, interval / 20, ...args); // Speed up setInterval by dividing the interval by 10
+                };
+            });
+
+
+
 
             await page2.goto(url)
             console.log("5%")
-            await page2.waitForTimeout(8000)
+            await page2.waitForTimeout(7000)
             console.log("10%", page2.url())
             await page2.waitForSelector('#soralink-human-verif-main', { visible: true })
             await page2.click('#soralink-human-verif-main')
             console.log("20%", page2.url())
 
 
-            await page2.waitForTimeout(9000)
+            await page2.waitForTimeout(2000)
             console.log("30%", page2.url())
             console.log("40%", page2.url())
+            await page2.waitForSelector('#generate')
             await page2.click('#generater')
             console.log("60%", page2.url())
 
 
-            await page2.waitForTimeout(7000)
+            await page2.waitForTimeout(1000)
             console.log("70%", page2.url())
 
-            const newPagePromise = new Promise(x => browser.once('targetcreated', target => x(target.page())));
-            await page2.click('#showlink')
-            const newpage = await newPagePromise;
-            page2.waitForTimeout(4000)
+            // const newPagePromise = new Promise(x => browser.once('targetcreated', target => x(target.page())));
+            // await page2.click('#showlink')
+            // const newpage = await newPagePromise;
+            const newpage = await popup(page2, browser, '#showlink')
+            page2.waitForTimeout(500)
             await page2.close()
             console.log('page2 closed')
-            console.log("80%", newpage.url())
+            console.log("80%", page2.url())
 
-            await newpage.waitForTimeout(3000)
+            await newpage.waitForTimeout(1000)
             console.log("85%", newpage.url())
 
-            await newpage.waitForSelector('.btn.btn-primary.btn-xs', { visible: true })
+            try {
+                await newpage.waitForSelector('.btn.btn-primary.btn-xs', { visible: true })
+            } catch (error) {
+                console.log(error)
+            }
 
             console.log("90%")
 
-            await newpage.click('.btn.btn-primary.btn-xs')
+            // await newpage.click('.btn.btn-primary.btn-xs')\
+            // await newpage.waitForTimeout(1000)
 
-            const page3 = await newPagePromise;
 
+            const page3 = await popup(newpage, browser, ".btn.btn-primary.btn-xs")
 
             let megaLinkf = await page3.evaluate(() => document.location.href)
             console.log("100%")
 
-            await page3.close()
+            try {
+
+                await page3.close()
+                await newpage.close()
+            }
+            catch (e) {
+                console.log("XXXXXX any page is already closed XXXXXX")
+            }
+            console.log(megaLinkf, '\n -------------------------------------------------------------------------')
 
             return megaLinkf
         }
@@ -154,7 +184,7 @@ const start = async () => {
                 links: finalLinks,
                 devL: link
             }
-            let result = await finalData.save()
+            // let result = await finalData.save()
             increaseCount()
             console.log(finalData)
         }
@@ -211,6 +241,19 @@ const disableCSS = async (page) => {
             req.continue();
         }
     });
+}
+
+const popup = async (_page, _browser, selector) => {
+    try {
+        let pageTarget = _page.target(); //save this to know that this was the opener
+        await _page.click(selector); //click on a link
+        let newTarget = await _browser.waitForTarget(target => target.opener() === pageTarget, { timeout: 2000 }); //check that you opened this page, rather than just checking the url
+        let newPage = await newTarget.page(); //get the page object
+        return newPage
+    }
+    catch (e) {
+        return _page
+    }
 }
 
 read()
