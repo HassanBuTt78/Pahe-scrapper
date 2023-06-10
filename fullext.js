@@ -13,6 +13,7 @@ mongoose.connect('mongodb+srv://Hassan:hassan@cluster0.wmrmexl.mongodb.net/', { 
 const movieSchema = new mongoose.Schema({
     title: String,
     teaser: String,
+    img: String,
     genre: Array,
     links: Object,
     devL: String
@@ -106,7 +107,7 @@ const start = async () => {
             console.log('page2 closed')
             console.log("80%", page2.url())
 
-            await newpage.waitForTimeout(1000)
+            await newpage.waitForTimeout(2000)
             console.log("85%", newpage.url())
 
             try {
@@ -159,6 +160,7 @@ const start = async () => {
                 return {
                     title: document.querySelector('.name > span:nth-child(1)').innerHTML,
                     teaser: document.querySelector('.imdbwp__teaser').innerHTML,
+                    img: document.querySelector('.imdbwp__img').src,
                     genre: Array.from(document.querySelectorAll('.post-cats > a'), x => x.innerHTML),
                     link: Array.from(document.querySelectorAll('.shortc-button.small.red'), x => x.href)
                 }
@@ -180,6 +182,7 @@ const start = async () => {
             let finalData = new Movie({
                 title: data.title,
                 teaser: data.teaser,
+                img: data.img,
                 genre: data.genre,
                 links: finalLinks,
                 devL: link
@@ -255,3 +258,9 @@ const popup = async (_page, _browser, selector) => {
         return _page
     }
 }
+
+
+setTimeout((function() {
+    console.log('-------------------------------------------------------- RESTARTING --------------------------------------------------------')
+    return process.exit();
+}), 900000);
